@@ -1,367 +1,365 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spelling Bee - Offline TTS</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f4f6f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 10px;
-      box-sizing: border-box;
-      color: #333;
-      transition: background-color 0.3s ease, color 0.3s ease;
-      overflow: hidden;
-    }
-    body.dark-mode {
-      background: #2c2c2c;
-      color: #f4f6f9;
-    }
-    .bee-container {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      padding: 20px;
-      width: 100%;
-      max-width: 380px;
-      text-align: center;
-      margin: auto;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-      position: relative;
-    }
-    body.dark-mode .bee-container {
-      background: #3a3a3a;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-    }
-    .title-group { margin-bottom: 5px; }
-    h2 { margin: 0; font-size: 1.8em; }
-    .grammar-buddy { color: blue; }
-    body.dark-mode .grammar-buddy { color: lightblue; }
-    input[type="text"], input[type="range"] {
-      padding: 8px; border-radius: 8px; border: 1px solid #ccc;
-      margin-bottom: 10px; width: 100%;
-      background-color: white; color: #333;
-      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-    }
-    body.dark-mode input[type="text"],
-    body.dark-mode input[type="range"] {
-      background-color: #555; border-color: #666; color: #f4f6f9;
-    }
-    button {
-      padding: 8px 15px; margin: 4px; border: none; border-radius: 10px;
-      background-color: #007bff; color: white; cursor: pointer; font-size: 0.9em;
-      transition: background-color 0.3s ease;
-    }
-    button:hover { background-color: #0056b3; }
-    button:disabled { background-color: #888; cursor: not-allowed; }
-    body.dark-mode button { background-color: #568bff; }
-    body.dark-mode button:hover { background-color: #3a68cf; }
-    body.dark-mode button:disabled { background-color: #666; }
-    .feedback { margin-top: 8px; font-weight: bold; font-size: 0.9em; }
-    .definition { font-size: 0.85em; color: #444; margin: 5px 0 10px; }
-    body.dark-mode .definition { color: #ddd; }
-    .score-timer { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.9em; color: #333; flex-wrap: wrap; }
-    body.dark-mode .score-timer { color: #f4f6f9; }
-    .volume-slider { margin: 8px 0; }
-    .toggle-container { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; font-size: 0.9em; }
-    .toggle-container label { margin-right: 8px; }
-    .switch { position: relative; display: inline-block; width: 35px; height: 18px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
-    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
-    input:checked + .slider { background-color: #007bff; }
-    input:focus + .slider { box-shadow: 0 0 1px #007bff; }
-    input:checked + .slider:before { transform: translateX(17px); }
-    #timerDisplay { display: inline-block; background-color: transparent; border: none; padding: 0; margin-left: 8px; }
-    .mode-toggle-container { position: absolute; top: 10px; right: 10px; z-index: 10; }
-    #modeToggle { background: none; border: none; font-size: 1.5em; cursor: pointer; padding: 0; color: #666; transition: color 0.3s ease; }
-    #modeToggle:hover { color: #007bff; }
-    body.dark-mode #modeToggle { color: #f4f6f9; }
-    body.dark-mode #modeToggle:hover { color: #568bff; }
-    .falling-emoji { position: fixed; top: -50px; font-size: 2em; opacity: 0; pointer-events: none; animation: fallAndFade 3s ease-in forwards; z-index: 1000; }
-    @keyframes fallAndFade {
-      0% { transform: translateY(0) scale(0.8); opacity: 0; }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { transform: translateY(100vh) scale(1.2); opacity: 0; }
-    }
-    .level-buttons {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        margin-bottom: 15px;
-    }
-    .level-buttons .row-2 {
-        grid-column: span 3;
-        display: flex;
-        gap: 10px;
-    }
-    .level-buttons .row-2 button {
-        flex-grow: 1;
-    }
-    @media (max-width: 360px) {
-      .bee-container { padding: 15px; }
-      button { padding: 6px 10px; font-size: 0.8em; }
-      h2 { font-size: 1.6em; }
-      .mode-toggle-container { top: 5px; right: 5px; }
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spelling Bee - Offline TTS</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 10px;
+      box-sizing: border-box;
+      color: #333;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      overflow: hidden;
+    }
+    body.dark-mode {
+      background: #2c2c2c;
+      color: #f4f6f9;
+    }
+    .bee-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      margin: auto;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+    body.dark-mode .bee-container {
+      background: #3a3a3a;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+    .title-group { margin-bottom: 5px; }
+    h2 { margin: 0; font-size: 1.8em; }
+    .grammar-buddy { color: blue; }
+    body.dark-mode .grammar-buddy { color: lightblue; }
+    input[type="text"], input[type="range"] {
+      padding: 8px; border-radius: 8px; border: 1px solid #ccc;
+      margin-bottom: 10px; width: 100%;
+      background-color: white; color: #333;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+    body.dark-mode input[type="text"],
+    body.dark-mode input[type="range"] {
+      background-color: #555; border-color: #666; color: #f4f6f9;
+    }
+    button {
+      padding: 8px 15px; margin: 4px; border: none; border-radius: 10px;
+      background-color: #007bff; color: white; cursor: pointer; font-size: 0.9em;
+      transition: background-color 0.3s ease;
+    }
+    button:hover { background-color: #0056b3; }
+    button:disabled { background-color: #888; cursor: not-allowed; }
+    body.dark-mode button { background-color: #568bff; }
+    body.dark-mode button:hover { background-color: #3a68cf; }
+    body.dark-mode button:disabled { background-color: #666; }
+    .feedback { margin-top: 8px; font-weight: bold; font-size: 0.9em; }
+    .definition { font-size: 0.85em; color: #444; margin: 5px 0 10px; }
+    body.dark-mode .definition { color: #ddd; }
+    .score-timer { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.9em; color: #333; flex-wrap: wrap; }
+    body.dark-mode .score-timer { color: #f4f6f9; }
+    .volume-slider { margin: 8px 0; }
+    .toggle-container { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; font-size: 0.9em; }
+    .toggle-container label { margin-right: 8px; }
+    .switch { position: relative; display: inline-block; width: 35px; height: 18px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #007bff; }
+    input:focus + .slider { box-shadow: 0 0 1px #007bff; }
+    input:checked + .slider:before { transform: translateX(17px); }
+    #timerDisplay { display: inline-block; background-color: transparent; border: none; padding: 0; margin-left: 8px; }
+    .mode-toggle-container { position: absolute; top: 10px; right: 10px; z-index: 10; }
+    #modeToggle { background: none; border: none; font-size: 1.5em; cursor: pointer; padding: 0; color: #666; transition: color 0.3s ease; }
+    #modeToggle:hover { color: #007bff; }
+    body.dark-mode #modeToggle { color: #f4f6f9; }
+    body.dark-mode #modeToggle:hover { color: #568bff; }
+    .falling-emoji { position: fixed; top: -50px; font-size: 2em; opacity: 0; pointer-events: none; animation: fallAndFade 3s ease-in forwards; z-index: 1000; }
+    @keyframes fallAndFade {
+      0% { transform: translateY(0) scale(0.8); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(100vh) scale(1.2); opacity: 0; }
+    }
+    .level-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .level-buttons .row-2 {
+        grid-column: span 3;
+        display: flex;
+        gap: 10px;
+    }
+    .level-buttons .row-2 button {
+        flex-grow: 1;
+    }
+    @media (max-width: 360px) {
+      .bee-container { padding: 15px; }
+      button { padding: 6px 10px; font-size: 0.8em; }
+      h2 { font-size: 1.6em; }
+      .mode-toggle-container { top: 5px; right: 5px; }
+    }
+  </style>
 </head>
 <body>
-  <div class="bee-container">
-    <div class="mode-toggle-container">
-        <button id="modeToggle">☀️</button>
-    </div>
+  <div class="bee-container">
+    <div class="mode-toggle-container">
+        <button id="modeToggle">☀️</button>
+    </div>
 
-    <div class="title-group">
-        <h2 class="grammar-buddy">GrammarBuddy</h2>
-        <h2>🐝 Spelling Bee</h2>
-    </div>
+    <div class="title-group">
+        <h2 class="grammar-buddy">GrammarBuddy</h2>
+        <h2>🐝 Spelling Bee</h2>
+    </div>
 
-    <div class="level-buttons">
-      <button id="easyBtn" onclick="selectLevelAndStart('easy')">Beginner</button>
-      <button id="hardBtn" onclick="selectLevelAndStart('hard')">Intermediate</button>
-      <button id="difficultBtn" onclick="selectLevelAndStart('difficult')">Advanced</button>
-      <div class="row-2">
-        <button id="legendBtn" onclick="selectLevelAndStart('legend')">Expert</button>
-        <button id="tharooristBtn" onclick="selectLevelAndStart('tharoorist')">Champion</button>
-      </div>
-    </div>
+    <div class="level-buttons">
+      <button id="easyBtn" onclick="selectLevelAndStart('easy')">Beginner</button>
+      <button id="hardBtn" onclick="selectLevelAndStart('hard')">Intermediate</button>
+      <button id="difficultBtn" onclick="selectLevelAndStart('difficult')">Advanced</button>
+      <div class="row-2">
+        <button id="legendBtn" onclick="selectLevelAndStart('legend')">Expert</button>
+        <button id="tharooristBtn" onclick="selectLevelAndStart('tharoorist')">Champion</button>
+      </div>
+    </div>
 
-    <div class="score-timer">
-      <button id="score" style="background-color: #007bff; color: white;">Score: 0/0</button>
-      <div class="toggle-container">
-        <label for="timerToggle">Timer:</label>
-        <label class="switch">
-          <input type="checkbox" id="timerToggle">
-          <span class="slider round"></span>
-        </label>
-        <span id="timerDisplay"></span>
-      </div>
-    </div>
+    <div class="score-timer">
+      <button id="score" style="background-color: #007bff; color: white;">Score: 0/0</button>
+      <div class="toggle-container">
+        <label for="timerToggle">Timer:</label>
+        <label class="switch">
+          <input type="checkbox" id="timerToggle">
+          <span class="slider round"></span>
+        </label>
+        <span id="timerDisplay"></span>
+      </div>
+    </div>
 
-    <label for="volume">🔊 Volume</label>
-    <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.1" value="1" />
+    <label for="volume">🔊 Volume</label>
+    <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.1" value="1" />
 
-    <div class="definition" id="definition">Select a level to start.</div>
+    <div class="definition" id="definition">Select a level to start.</div>
 
-    <input type="text" id="userInput" placeholder="Type the word here" />
-    <div>
-      <button id="hearButton" onclick="speakWord()">🔊 Hear</button>
-      <button id="answerButton" onclick="checkAnswer()">✅ Answer</button>
-    </div>
-    <div class="feedback" id="feedback"></div>
-  </div>
+    <input type="text" id="userInput" placeholder="Type the word here" />
+    <div>
+      <button id="hearButton" onclick="speakWord()">🔊 Hear</button>
+      <button id="answerButton" onclick="checkAnswer()">✅ Answer</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+  </div>
 
-  <script>
-    const wordList = {
-      easy: [
-        { word: "apple", meaning: "a sweet fruit" },
-        { word: "whistle", meaning: "makes a high sound when blown" },
-        { word: "flower", meaning: "a colorful plant part" },
-        { word: "light", meaning: "radiant energy that makes things visible" },
-        { word: "happy", meaning: "feeling or showing pleasure or contentment" }
-      ],
-      hard: [
-        { word: "pyramid", meaning: "a triangular ancient structure" },
-        { word: "surface", meaning: "outermost layer" },
-        { word: "exercise", meaning: "activity requiring physical effort" },
-        { word: "challenge", meaning: "a call to take part in a contest" },
-        { word: "knowledge", meaning: "facts, information, and skills acquired" }
-      ],
-      difficult: [
-        { word: "psychology", meaning: "study of the human mind" },
-        { word: "intellectual", meaning: "involving deep thought or knowledge" },
-        { word: "courageous", meaning: "not deterred by danger or pain" },
-        { word: "conscious", meaning: "aware of and responding to one's surroundings" },
-        { word: "definitely", meaning: "without any doubt" }
-      ],
-      legend: [
-        { word: "sesquipedalian", meaning: "using long words" },
-        { word: "supererogatory", meaning: "beyond what is required" },
-        { word: "antidisestablishmentarianism", meaning: "opposition to the disestablishment of the Church of England" },
-        { word: "flummoxed", meaning: "bewildered or perplexed" },
-        { word: "onomatopoeia", meaning: "a word that imitates the sound it represents" }
-      ],
-      tharoorist: [
-        { word: "floccinaucinihilipilification", meaning: "the act of saying something is worthless" },
-        { word: "cinematographically", meaning: "related to filming motion pictures" },
-        { word: "incomprehensibilities", meaning: "things that are impossible to understand" },
-        { word: "syzygy", meaning: "alignment of celestial bodies" },
-        { word: "pneumonoultramicroscopicsilicovolcanoconiosis", meaning: "a lung disease caused by inhaling very fine silica dust" }
-      ]
-    };
+  <script>
+    const wordList = {
+      easy: [
+        { word: "apple", meaning: "a sweet fruit" },
+        { word: "whistle", meaning: "makes a high sound when blown" },
+        { word: "flower", meaning: "a colorful plant part" },
+        { word: "light", meaning: "radiant energy that makes things visible" },
+        { word: "happy", meaning: "feeling or showing pleasure or contentment" }
+      ],
+      hard: [
+        { word: "pyramid", meaning: "a triangular ancient structure" },
+        { word: "surface", meaning: "outermost layer" },
+        { word: "exercise", meaning: "activity requiring physical effort" },
+        { word: "challenge", meaning: "a call to take part in a contest" },
+        { word: "knowledge", meaning: "facts, information, and skills acquired" }
+      ],
+      difficult: [
+        { word: "psychology", meaning: "study of the human mind" },
+        { word: "intellectual", meaning: "involving deep thought or knowledge" },
+        { word: "courageous", meaning: "not deterred by danger or pain" },
+        { word: "conscious", meaning: "aware of and responding to one's surroundings" },
+        { word: "definitely", meaning: "without any doubt" }
+      ],
+      legend: [
+        { word: "sesquipedalian", meaning: "using long words" },
+        { word: "supererogatory", meaning: "beyond what is required" },
+        { word: "antidisestablishmentarianism", meaning: "opposition to the disestablishment of the Church of England" },
+        { word: "flummoxed", meaning: "bewildered or perplexed" },
+        { word: "onomatopoeia", meaning: "a word that imitates the sound it represents" }
+      ],
+      tharoorist: [
+        { word: "floccinaucinihilipilification", meaning: "the act of saying something is worthless" },
+        { word: "cinematographically", meaning: "related to filming motion pictures" },
+        { word: "incomprehensibilities", meaning: "things that are impossible to understand" },
+        { word: "syzygy", meaning: "alignment of celestial bodies" },
+        { word: "pneumonoultramicroscopicsilicovolcanoconiosis", meaning: "a lung disease caused by inhaling very fine silica dust" }
+      ]
+    };
 
-    let currentWord = null;
-    let correctAnswers = 0;
-    let totalAttempts = 0;
-    let timer;
-    let timeLeft = 30;
-    let timerEnabled = false;
-    let selectedLevel = 'easy';
+    let currentWord = null;
+    let correctAnswers = 0;
+    let totalAttempts = 0;
+    let timer;
+    let timeLeft = 30;
+    let timerEnabled = false;
+    let selectedLevel = 'easy';
 
-    const scoreButton = document.getElementById('score');
-    const timerToggle = document.getElementById('timerToggle');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const modeToggle = document.getElementById('modeToggle');
-    const body = document.body;
+    const scoreButton = document.getElementById('score');
+    const timerToggle = document.getElementById('timerToggle');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const modeToggle = document.getElementById('modeToggle');
+    const body = document.body;
 
-    const hearButton = document.getElementById('hearButton');
-    const answerButton = document.getElementById('answerButton');
-    const userInput = document.getElementById('userInput');
+    const hearButton = document.getElementById('hearButton');
+    const answerButton = document.getElementById('answerButton');
+    const userInput = document.getElementById('userInput');
 
-    function updateButtonStates(state) {
-        if (state === 'initial') {
-            hearButton.disabled = true;
-            answerButton.disabled = true;
-            userInput.value = '';
-            userInput.disabled = true;
-            document.getElementById('definition').innerText = 'Select a level to start.';
-            document.getElementById('feedback').innerText = '';
-        } else if (state === 'word_loaded') {
-            hearButton.disabled = false;
-            answerButton.disabled = false;
-            userInput.disabled = false;
-            userInput.focus();
-        } else if (state === 'answer_given') {
-            hearButton.disabled = true;
-            answerButton.disabled = true;
-            userInput.disabled = true;
-        }
-    }
+    function updateButtonStates(state) {
+        if (state === 'initial') {
+            hearButton.disabled = true;
+            answerButton.disabled = true;
+            userInput.value = '';
+            userInput.disabled = true;
+            document.getElementById('definition').innerText = 'Select a level to start.';
+            document.getElementById('feedback').innerText = '';
+        } else if (state === 'word_loaded') {
+            hearButton.disabled = false;
+            answerButton.disabled = false;
+            userInput.disabled = false;
+            userInput.focus();
+        } else if (state === 'answer_given') {
+            hearButton.disabled = true;
+            answerButton.disabled = true;
+            userInput.disabled = true;
+        }
+    }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        updateButtonStates('initial');
-        updateScoreDisplay();
-    });
+    document.addEventListener('DOMContentLoaded', () => {
+        updateButtonStates('initial');
+        updateScoreDisplay();
+    });
 
-    function toggleDarkMode() {
-        body.classList.toggle('dark-mode');
-        const isDarkMode = body.classList.contains('dark-mode');
-        localStorage.setItem('darkMode', isDarkMode);
-        modeToggle.innerText = isDarkMode ? '🌙' : '☀️';
-    }
+    function toggleDarkMode() {
+        body.classList.toggle('dark-mode');
+        const isDarkMode = body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDarkMode);
+        modeToggle.innerText = isDarkMode ? '🌙' : '☀️';
+    }
 
-    const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedDarkMode === null || savedDarkMode === 'true') {
-        body.classList.add('dark-mode');
-        modeToggle.innerText = '🌙';
-        localStorage.setItem('darkMode', true);
-    } else {
-        modeToggle.innerText = '☀️';
-    }
+    const savedDarkMode = localStorage.getItem('darkMode');
+    if (savedDarkMode === null || savedDarkMode === 'true') {
+        body.classList.add('dark-mode');
+        modeToggle.innerText = '🌙';
+        localStorage.setItem('darkMode', true);
+    } else {
+        modeToggle.innerText = '☀️';
+    }
 
-    modeToggle.addEventListener('click', toggleDarkMode);
+    modeToggle.addEventListener('click', toggleDarkMode);
 
-    scoreButton.addEventListener('click', () => {
-        console.log(`Score button clicked! Correct: ${correctAnswers}, Total: ${totalAttempts}`);
-    });
+    scoreButton.addEventListener('click', () => {
+        console.log(`Score button clicked! Correct: ${correctAnswers}, Total: ${totalAttempts}`);
+    });
 
-    timerToggle.addEventListener('change', () => {
-      timerEnabled = timerToggle.checked;
-      if (!timerEnabled) {
-        clearInterval(timer);
-        timerDisplay.innerText = '';
-      } else {
-        if (currentWord) startTimer();
-      }
-    });
+    timerToggle.addEventListener('change', () => {
+      timerEnabled = timerToggle.checked;
+      if (!timerEnabled) {
+        clearInterval(timer);
+        timerDisplay.innerText = '';
+      } else {
+        if (currentWord) startTimer();
+      }
+    });
 
-    function selectLevelAndStart(level) {
-      selectedLevel = level;
-      getNextWord();
-    }
-    
-    function getNextWord() {
-      clearInterval(timer);
-      timeLeft = 30;
-      const words = wordList[selectedLevel];
-      const rand = Math.floor(Math.random() * words.length);
-      currentWord = words[rand];
+    function selectLevelAndStart(level) {
+      selectedLevel = level;
+      getNextWord();
+    }
+    
+    function getNextWord() {
+      clearInterval(timer);
+      timeLeft = 30;
+      const words = wordList[selectedLevel];
+      const rand = Math.floor(Math.random() * words.length);
+      currentWord = words[rand];
 
-      if (typeof currentWord === 'string') {
-        currentWord = { word: currentWord, meaning: "No definition available." };
-      }
+      if (typeof currentWord === 'string') {
+        currentWord = { word: currentWord, meaning: "No definition available." };
+      }
 
-      document.getElementById('definition').innerText = currentWord.meaning;
-      document.getElementById('feedback').innerText = '';
-      document.getElementById('userInput').value = '';
-      updateButtonStates('word_loaded');
-      
-      if (timerEnabled) {
-          startTimer();
-      } else {
-          timerDisplay.innerText = '';
-      }
-      
-      speakWord();
-    }
+      document.getElementById('definition').innerText = currentWord.meaning;
+      document.getElementById('feedback').innerText = '';
+      document.getElementById('userInput').value = '';
+      updateButtonStates('word_loaded');
+      
+      if (timerEnabled) {
+          startTimer();
+      } else {
+          timerDisplay.innerText = '';
+      }
+    }
 
-    function speakWord() {
-      if (!currentWord) return;
-      const utter = new SpeechSynthesisUtterance(currentWord.word);
-      utter.lang = 'en-IN';
-      utter.volume = parseFloat(document.getElementById('volume').value);
-      const voices = speechSynthesis.getVoices();
-      utter.voice = voices.find(v => v.lang === 'en-IN' && v.name.toLowerCase().includes('female')) || voices[0];
-      speechSynthesis.speak(utter);
-    }
+    function speakWord() {
+      if (!currentWord) return;
+      const utter = new SpeechSynthesisUtterance(currentWord.word);
+      utter.lang = 'en-IN';
+      utter.volume = parseFloat(document.getElementById('volume').value);
+      const voices = speechSynthesis.getVoices();
+      utter.voice = voices.find(v => v.lang === 'en-IN' && v.name.toLowerCase().includes('female')) || voices[0];
+      speechSynthesis.speak(utter);
+    }
 
-    function checkAnswer() {
-      if (answerButton.disabled) return;
-      const input = document.getElementById('userInput').value.trim().toLowerCase();
-      if (!currentWord) {
-          document.getElementById('feedback').innerText = "Please select a level first!";
-          return;
-      }
-      totalAttempts++;
-      const result = input === currentWord.word.toLowerCase();
-      document.getElementById('feedback').innerText = result ? '🎉 Correct!' : `❌ Wrong. It was: ${currentWord.word}`;
-      if (result) { correctAnswers++; triggerFallingEmojis(); }
-      updateScoreDisplay();
-      clearInterval(timer);
-      updateButtonStates('answer_given');
-      setTimeout(getNextWord, 2000); // Wait 2 seconds before getting the next word
-    }
+    function checkAnswer() {
+      if (answerButton.disabled) return;
+      const input = document.getElementById('userInput').value.trim().toLowerCase();
+      if (!currentWord) {
+          document.getElementById('feedback').innerText = "Please select a level first!";
+          return;
+      }
+      totalAttempts++;
+      const result = input === currentWord.word.toLowerCase();
+      document.getElementById('feedback').innerText = result ? '🎉 Correct!' : `❌ Wrong. It was: ${currentWord.word}`;
+      if (result) { correctAnswers++; triggerFallingEmojis(); }
+      updateScoreDisplay();
+      clearInterval(timer);
+      updateButtonStates('answer_given');
+      setTimeout(getNextWord, 2000); // Wait 2 seconds before getting the next word
+    }
 
-    function updateScoreDisplay() {
-        scoreButton.innerText = `Score: ${correctAnswers}/${totalAttempts}`;
-    }
+    function updateScoreDisplay() {
+        scoreButton.innerText = `Score: ${correctAnswers}/${totalAttempts}`;
+    }
 
-    function startTimer() {
-        if (!timerEnabled) return;
-        timerDisplay.innerText = `⏱️ ${timeLeft}`;
-        timer = setInterval(() => {
-            timeLeft--;
-            timerDisplay.innerText = `⏱️ ${timeLeft}`;
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                document.getElementById('feedback').innerText = `⏰ Time's up! The word was: ${currentWord.word}`;
-                updateButtonStates('answer_given');
-                setTimeout(getNextWord, 2000); // Wait 2 seconds and get the next word
-            }
-        }, 1000);
-    }
+    function startTimer() {
+        if (!timerEnabled) return;
+        timerDisplay.innerText = `⏱️ ${timeLeft}`;
+        timer = setInterval(() => {
+            timeLeft--;
+            timerDisplay.innerText = `⏱️ ${timeLeft}`;
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                document.getElementById('feedback').innerText = `⏰ Time's up! The word was: ${currentWord.word}`;
+                updateButtonStates('answer_given');
+                setTimeout(getNextWord, 2000); // Wait 2 seconds and get the next word
+            }
+        }, 1000);
+    }
 
-    const emojis = ['🎉', '✨', '🌟', '🥳', '🏆', '💯', '😄', '😊', '😂', '👍'];
-    function triggerFallingEmojis() {
-        for (let i = 0; i < 15; i++) {
-            const emoji = document.createElement('span');
-            emoji.classList.add('falling-emoji');
-            emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-            emoji.style.left = `${Math.random() * 100}vw`;
-            emoji.style.animationDelay = `${Math.random() * 0.5}s`;
-            document.body.appendChild(emoji);
-            emoji.addEventListener('animationend', () => { emoji.remove(); });
-        }
-    }
-    window.speechSynthesis.onvoiceschanged = () => {};
-  </script>
+    const emojis = ['🎉', '✨', '🌟', '🥳', '🏆', '💯', '😄', '😊', '😂', '👍'];
+    function triggerFallingEmojis() {
+        for (let i = 0; i < 15; i++) {
+            const emoji = document.createElement('span');
+            emoji.classList.add('falling-emoji');
+            emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            emoji.style.left = `${Math.random() * 100}vw`;
+            emoji.style.animationDelay = `${Math.random() * 0.5}s`;
+            document.body.appendChild(emoji);
+            emoji.addEventListener('animationend', () => { emoji.remove(); });
+        }
+    }
+    window.speechSynthesis.onvoiceschanged = () => {};
+  </script>
 </body>
 </html>
