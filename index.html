@@ -151,7 +151,7 @@
     <label for="volume">🔊 Volume</label>
     <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.1" value="1" />
 
-    <div class="definition" id="definition">|| SELECT A LEVEL TO START ||</div>
+    <div class="definition" id="definition">Select a level to start.</div>
 
     <input type="text" id="userInput" placeholder="TYPE THE WORD HERE" />
     <div>
@@ -878,7 +878,7 @@
             answerButton.disabled = true;
             userInput.value = '';
             userInput.disabled = true;
-            document.getElementById('definition').innerText = 'Select a level to start.';
+            document.getElementById('definition').innerText = '|| SELECT A LEVEL TO START. THEN CLICK "HEAR" ||';
             document.getElementById('feedback').innerText = '';
         } else if (state === 'word_loaded') {
             hearButton.disabled = false;
