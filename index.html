@@ -68,6 +68,7 @@
     body.dark-mode .definition { color: #ddd; }
     .score-timer { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.9em; color: #333; flex-wrap: wrap; }
     body.dark-mode .score-timer { color: #f4f6f9; }
+    #score { font-weight: bold; }  /* score styled as plain text */
     .volume-slider { margin: 8px 0; }
     .toggle-container { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; font-size: 0.9em; }
     .toggle-container label { margin-right: 8px; }
@@ -135,7 +136,7 @@
     </div>
 
     <div class="score-timer">
-      <button id="score" style="background-color: #007bff; color: white;">Score: 0/0</button>
+      <span id="score">Score: 0/0</span>
       <div class="toggle-container">
         <label for="timerToggle">Timer:</label>
         <label class="switch">
@@ -206,7 +207,7 @@
     let timerEnabled = false;
     let selectedLevel = 'easy';
 
-    const scoreButton = document.getElementById('score');
+    const scoreDisplay = document.getElementById('score');
     const timerToggle = document.getElementById('timerToggle');
     const timerDisplay = document.getElementById('timerDisplay');
     const modeToggle = document.getElementById('modeToggle');
@@ -259,10 +260,6 @@
 
     modeToggle.addEventListener('click', toggleDarkMode);
 
-    scoreButton.addEventListener('click', () => {
-        console.log(`Score button clicked! Correct: ${correctAnswers}, Total: ${totalAttempts}`);
-    });
-
     timerToggle.addEventListener('change', () => {
       timerEnabled = timerToggle.checked;
       if (!timerEnabled) {
@@ -299,7 +296,6 @@
       } else {
           timerDisplay.innerText = '';
       }
-      // 🔇 Removed auto speak here
     }
 
     function speakWord() {
@@ -326,12 +322,11 @@
       updateScoreDisplay();
       clearInterval(timer);
       updateButtonStates('answer_given');
-      setTimeout(getNextWord, 2000); // Next word after delay
-      // 🔇 No auto speak after moving to next word
+      setTimeout(getNextWord, 2000); 
     }
 
     function updateScoreDisplay() {
-        scoreButton.innerText = `Score: ${correctAnswers}/${totalAttempts}`;
+        scoreDisplay.innerText = `Score: ${correctAnswers}/${totalAttempts}`;
     }
 
     function startTimer() {
