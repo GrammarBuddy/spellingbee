@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spelling Bee - Offline TTS</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 10px;
+      box-sizing: border-box;
+      color: #333; /* Default text color for light mode */
+      transition: background-color 0.3s ease, color 0.3s ease;
+      overflow: hidden; /* Prevent scrollbars from appearing due to falling emojis */
+    }
+
+    body.dark-mode {
+      background: #2c2c2c; /* Dark mode background */
+      color: #f4f6f9; /* Dark mode text color */
+    }
+
+    .bee-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      margin: auto;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      position: relative; /* Keep this for the mode toggle positioning */
+    }
+
+    body.dark-mode .bee-container {
+      background: #3a3a3a; /* Dark mode container background */
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+
+    .title-group {
+        margin-bottom: 5px;
+    }
+    h2 {
+      margin: 0;
+      font-size: 1.8em;
+    }
+    .grammar-buddy {
+        color: blue;
+    }
+    body.dark-mode .grammar-buddy {
+        color: lightblue;
+    }
+
+    select, input[type="text"], input[type="range"] {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      width: 100%;
+      background-color: white;
+      color: #333;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    body.dark-mode select,
+    body.dark-mode input[type="text"],
+    body.dark-mode input[type="range"] {
+      background-color: #555;
+      border-color: #666;
+      color: #f4f6f9;
+    }
+
+    button {
+      padding: 8px 15px;
+      margin: 4px;
+      border: none;
+      border-radius: 10px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    button:disabled { /* Style for disabled buttons */
+        background-color: #888;
+        cursor: not-allowed;
+    }
+    body.dark-mode button {
+      background-color: #568bff;
+    }
+    body.dark-mode button:hover {
+      background-color: #3a68cf;
+    }
+    body.dark-mode button:disabled { /* Style for disabled buttons in dark mode */
+        background-color: #666;
+    }
+
+    .feedback {
+      margin-top: 8px;
+      font-weight: bold;
+      font-size: 0.9em;
+    }
+    .definition {
+      font-size: 0.85em;
+      color: #444;
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+    body.dark-mode .definition {
+      color: #ddd;
+    }
+
+    .score-timer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 0.9em;
+      color: #333;
+      flex-wrap: wrap;
+    }
+    body.dark-mode .score-timer {
+      color: #f4f6f9;
+    }
+
+    .volume-slider {
+      margin: 8px 0;
+    }
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+        font-size: 0.9em;
+    }
+    .toggle-container label {
+        margin-right: 8px;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 35px;
+      height: 18px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      -webkit-transition: .4s;
+      transition: .4s;
+      border-radius: 20px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      -webkit-transition: .4s;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #007bff;
+    }
+
+    input:focus + .slider {
+      box-shadow: 0 0 1px #007bff;
+    }
+
+    input:checked + .slider:before {
+      -webkit-transform: translateX(17px);
+      -ms-transform: translateX(17px);
+      transform: translateX(17px);
+    }
+
+    #timerDisplay {
+        display: inline-block;
+        background-color: transparent;
+        border: none;
+        padding: 0;
+        margin-left: 8px;
+    }
+
+    /* Light/Dark Mode Toggle Button specific styles */
+    .mode-toggle-container {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+    }
+    #modeToggle {
+        background: none;
+        border: none;
+        font-size: 1.5em;
+        cursor: pointer;
+        padding: 0;
+        color: #666;
+        transition: color 0.3s ease;
+    }
+    #modeToggle:hover {
+        color: #007bff;
+    }
+    body.dark-mode #modeToggle {
+        color: #f4f6f9;
+    }
+    body.dark-mode #modeToggle:hover {
+        color: #568bff;
+    }
+
+    /* Falling Emojis Styles */
+    .falling-emoji {
+        position: fixed;
+        top: -50px;
+        font-size: 2em;
+        opacity: 0;
+        pointer-events: none;
+        animation: fallAndFade 3s ease-in forwards;
+        z-index: 1000;
+    }
+
+    @keyframes fallAndFade {
+        0% {
+            transform: translateY(0) scale(0.8);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(100vh) scale(1.2);
+            opacity: 0;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .bee-container {
+            padding: 15px;
+        }
+        button {
+            padding: 6px 10px;
+            font-size: 0.8em;
+        }
+        h2 {
+            font-size: 1.6em;
+        }
+        .mode-toggle-container {
+            top: 5px;
+            right: 5px;
+        }
+    }
+  </style>
+</head>
+<body class="dark-mode">
+  <div class="bee-container">
+    <div class="mode-toggle-container">
+        <button id="modeToggle">🌙</button>
+    </div>
+
+    <div class="title-group">
+        <h2 class="grammar-buddy">GrammarBuddy</h2>
+        <h2>🐝 Spelling Bee</h2>
+    </div>
+
+    <label for="level">Select Level:</label>
+    <select id="level">
+      <option value="easy">Easy</option>
+      <option value="hard">Hard</option>
+      <option value="difficult">Difficult</option>
+      <option value="legend">Legend</option>
+      <option value="tharoorist">Tharoorist</option>
+    </select>
+
+    <div class="score-timer">
+      <button id="score" style="background-color: #007bff; color: white;">Score: 0/0</button>
+      <div class="toggle-container">
+        <label for="timerToggle">Timer:</label>
+        <label class="switch">
+          <input type="checkbox" id="timerToggle">
+          <span class="slider round"></span>
+        </label>
+        <span id="timerDisplay"></span>
+      </div>
+    </div>
+
+    <label for="volume">🔊 Volume</label>
+    <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.1" value="1" />
+
+    <div class="definition" id="definition">Click "➕ New Word" for a word, then "🔊 Hear" to listen.</div>
+
+    <input type="text" id="userInput" placeholder="Type the word here" />
+    <div>
+      <button id="newWordButton" onclick="newWord()">➕ New Word</button>
+      <button id="hearButton" onclick="speakWord()">🔊 Hear</button>
+      <button id="answerButton" onclick="checkAnswer()">✅ Answer</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <script>
+    const wordList = {
+      easy: [
+        { word: "apple", meaning: "a sweet fruit" },
+        { word: "book", meaning: "pages bound with writing" },
+        { word: "rain", meaning: "water from the sky" },
+        { word: "water", meaning: "clear liquid we drink" },
+        { word: "bread", meaning: "baked food made from flour" },
+        { word: "juice", meaning: "drink from fruit" },
+        { word: "chair", meaning: "something to sit on" },
+        { word: "table", meaning: "flat surface with legs" },
+        { word: "spoon", meaning: "tool for eating or serving" },
+        { word: "plate", meaning: "dish for holding food" },
+        { word: "light", meaning: "brightness from the sun or lamp" },
+        { word: "night", meaning: "time when it is dark" },
+        { word: "house", meaning: "a place where people live" },
+        { word: "floor", meaning: "bottom surface of a room" },
+        { word: "cloud", meaning: "white shape in the sky" },
+        { word: "grass", meaning: "green plants on the ground" },
+        { word: "flower", meaning: "colorful plant" },
+        { word: "mango", meaning: "a sweet tropical fruit" },
+        { word: "orange", meaning: "a round fruit or color" },
+        { word: "banana", meaning: "long yellow fruit" },
+        { word: "tiger", meaning: "large wild cat with stripes" },
+        { word: "zebra", meaning: "black and white striped animal" },
+        { word: "money", meaning: "used to buy things" },
+        { word: "pencil", meaning: "tool for writing" },
+        { word: "eraser", meaning: "used to remove pencil marks" },
+        { word: "marker", meaning: "pen with bright ink" },
+        { word: "window", meaning: "opening in a wall with glass" },
+        { word: "pillow", meaning: "soft support for the head" },
+        { word: "bucket", meaning: "used to hold water or things" },
+        { word: "school", meaning: "place to learn" },
+        { word: "teacher", meaning: "person who helps you learn" },
+        { word: "doctor", meaning: "person who helps sick people" },
+        { word: "farmer", meaning: "person who grows food" },
+        { word: "police", meaning: "person who protects people" },
+        { word: "animal", meaning: "living creature (not human)" },
+        { word: "family", meaning: "parents and children" },
+        { word: "mother", meaning: "female parent" },
+        { word: "father", meaning: "male parent" },
+        { word: "sister", meaning: "girl sibling" },
+        { word: "brother", meaning: "boy sibling" },
+        { word: "garden", meaning: "area with flowers or plants" },
+        { word: "bottle", meaning: "container for liquids" },
+        { word: "yellow", meaning: "color like the sun" },
+        { word: "purple", meaning: "color mix of red and blue" },
+        { word: "orange", meaning: "color or a fruit" },
+        { word: "ladder", meaning: "used to climb up" },
+        { word: "camera", meaning: "used to take pictures" },
+        { word: "cookie", meaning: "sweet baked snack" },
+        { word: "butter", meaning: "yellow fat from milk" },
+        { word: "market", meaning: "place to buy things" },
+        { word: "school", meaning: "place where students learn" },
+        { word: "ruler", meaning: "used to measure length" },
+        { word: "summer", meaning: "hot season of the year" },
+        { word: "winter", meaning: "cold season with snow" },
+        { word: "season", meaning: "one of the four parts of the year" },
+        { word: "shadow", meaning: "dark shape made by light blocking" },
+        { word: "yellow", meaning: "color like bananas" },
+        { word: "mirror", meaning: "glass that shows your reflection" },
+        { word: "bottle", meaning: "container to hold liquids" },
+        { word: "cupboard", meaning: "a box-like storage with doors" },
+        { word: "button", meaning: "small round object on clothes" },
+        { word: "summer", meaning: "the hottest season" },
+        { word: "letter", meaning: "written message" },
+        { word: "window", meaning: "opening in a wall with glass" },
+        { word: "garden", meaning: "place with plants and flowers" },
+        { word: "circle", meaning: "round shape" },
+        { word: "square", meaning: "shape with four equal sides" },
+        { word: "number", meaning: "shows how many" },
+        { word: "finger", meaning: "part of your hand" },
+        { word: "animal", meaning: "non-human living being" },
+        { word: "monkey", meaning: "smart animal with long tail" },
+        { word: "camel", meaning: "desert animal with humps" },
+        { word: "sheep", meaning: "farm animal with wool" },
+        { word: "tiger", meaning: "wild cat with stripes" },
+        { word: "rabbit", meaning: "animal with long ears" },
+        { word: "spider", meaning: "insect with eight legs" },
+        { word: "butter", meaning: "spread made from milk" },
+        { word: "mirror", meaning: "shows your reflection" },
+        { word: "basket", meaning: "container made from woven material" },
+        { word: "closet", meaning: "small room to keep clothes" },
+        { word: "window", meaning: "glass opening for air and light" },
+        { word: "jacket", meaning: "warm clothing worn on top" },
+        { word: "shirt", meaning: "clothing for the upper body" },
+        { word: "dress", meaning: "clothing worn by girls or women" },
+        { word: "trousers", meaning: "clothing worn on legs" },
+        { word: "shorts", meaning: "short trousers" },
+        { word: "colour", meaning: "what you see (like red, green)" },
+        { word: "slipper", meaning: "light shoe worn at home" },
+        { word: "bucket", meaning: "round container with handle" },
+        { word: "candle", meaning: "gives light when lit" },
+        { word: "garden", meaning: "place where flowers grow" },
+        { word: "pillow", meaning: "soft thing for resting your head" },
+        { word: "poster", meaning: "large printed paper for display" },
+        { word: "sticker", meaning: "picture with glue on back" },
+        { word: "tablet", meaning: "small computer" },
+        { word: "mobile", meaning: "phone you can carry" },
+        { word: "socket", meaning: "place where you plug something in" },
+        { word: "ticket", meaning: "paper that lets you enter" },
+        { word: "engine", meaning: "machine that makes a car go" },
+        { word: "helmet", meaning: "head protection" },
+        { word: "ladder", meaning: "tool for climbing" },
+        { word: "painter", meaning: "person who paints" },
+        { word: "driver", meaning: "person who drives vehicles" },
+        { word: "cleaner", meaning: "person who cleans" },
+        { word: "doctor", meaning: "person who treats illness" },
+        { word: "tailor", meaning: "person who sews clothes" },
+        { word: "singer", meaning: "person who sings" },
+        { word: "dancer", meaning: "person who dances" },
+        { word: "cooker", meaning: "used to prepare food" },
+        { word: "animal", meaning: "living creature" },
+        { word: "insect", meaning: "small animal with six legs" },
+        { word: "lizard", meaning: "small reptile" },
+        { word: "garden", meaning: "area to grow plants" },
+        { word: "window", meaning: "part of a wall that lets in light" },
+        { word: "hanger", meaning: "used to hang clothes" },
+        { word: "marker", meaning: "pen for writing" },
+        { word: "rubber", meaning: "eraser" },
+        { word: "doctor", meaning: "person who helps the sick" },
+        { word: "painter", meaning: "one who paints walls or pictures" },
+        { word: "singer", meaning: "one who sings songs" },
+        { word: "waiter", meaning: "one who serves food" },
+        { word: "vendor", meaning: "one who sells things" },
+        { word: "yellow", meaning: "a color" },
+        { word: "circle", meaning: "round shape" },
+        { word: "animal", meaning: "living creature" },
+        { word: "pocket", meaning: "small pouch on clothes" },
+        { word: "banana", meaning: "long yellow fruit" },
+        { word: "wallet", meaning: "holds money" },
+        { word: "window", meaning: "glass-covered opening" },
+        { word: "fridge", meaning: "keeps food cold" },
+        { word: "locket", meaning: "small necklace with picture" },
+        { word: "sponge", meaning: "soft object used for cleaning" },
+        { word: "tissue", meaning: "soft paper for cleaning" },
+        { word: "curtain", meaning: "cloth covering a window" },
+        { word: "tunnel", meaning: "long underground passage" },
+        { word: "hammer", meaning: "tool used to hit things" },
+        { word: "hanger", meaning: "holds clothes in a closet" },
+        { word: "finger", meaning: "part of hand" },
+        { word: "pillow", meaning: "soft thing to rest your head" },
+        { word: "jungle", meaning: "thick forest" },
+        { word: "dragon", meaning: "large fire-breathing creature" },
+        { word: "bottle", meaning: "used to hold liquids" },
+        { word: "tomato", meaning: "red round vegetable" },
+        { word: "carrot", meaning: "orange root vegetable" },
+        { word: "onion", meaning: "round vegetable with layers" },
+        { word: "pepper", meaning: "spicy or black powder" },
+        { word: "celery", meaning: "crunchy green vegetable" },
+        { word: "honey", meaning: "sweet food made by bees" },
+        { word: "butter", meaning: "yellow fat used in cooking" },
+        { word: "laptop", meaning: "small portable computer" },
+        { word: "window", meaning: "part of a wall for seeing outside" },
+        { word: "socket", meaning: "a plug point" },
+        { word: "cushion", meaning: "soft pillow-like object" },
+        { word: "magnet", meaning: "attracts metal" },
+        { word: "hammer", meaning: "tool to hit nails" },
+        { word: "drawer", meaning: "box that pulls out in furniture" },
+        { word: "carpet", meaning: "soft covering for the floor" },
+        { word: "marker", meaning: "colorful writing tool" },
+        { word: "rocket", meaning: "flies into space" },
+        { word: "animal", meaning: "non-human creature" },
+        { word: "planet", meaning: "a big object in space" },
+        { word: "tunnel", meaning: "underground road or passage" },
+        { word: "shadow", meaning: "dark shape when light is blocked" },
+        { word: "circle", meaning: "round shape" },
+        { word: "triangle", meaning: "shape with three sides" },
+        { word: "compass", meaning: "tool that shows direction" },
+        { word: "season", meaning: "part of the year" },
+        { word: "mirror", meaning: "glass that shows reflection" },
+        { word: "ladder", meaning: "tool to go up" },
+        { word: "puppet", meaning: "toy moved by strings" },
+        { word: "whistle", meaning: "makes a high sound when blown" }
+      ],
+      hard: [
+        { word: "pyramid", meaning: "a triangular ancient structure" },
+        { word: "capture", meaning: "to catch or take someone or something" },
+        { word: "vehicle", meaning: "a machine used for transport" },
+        { word: "journey", meaning: "a long trip or travel" },
+        { word: "fantasy", meaning: "imagination or made-up story" },
+        { word: "monster", meaning: "a scary or strange creature" },
+        { word: "thunder", meaning: "loud sound after lightning" },
+        { word: "justice", meaning: "fairness or lawfulness" },
+        { word: "imagine", meaning: "to picture something in your mind" },
+        { word: "freedom", meaning: "the state of being free" },
+        { word: "plastic", meaning: "material used to make many objects" },
+        { word: "distant", meaning: "far away" },
+        { word: "explore", meaning: "to travel to learn or discover" },
+        { word: "harvest", meaning: "to gather crops" },
+        { word: "courage", meaning: "bravery or strength in fear" },
+        { word: "machine", meaning: "a tool with moving parts" },
+        { word: "silence", meaning: "no sound or noise" },
+        { word: "culture", meaning: "ideas and customs of a group" },
+        { word: "airport", meaning: "place where planes land and take off" },
+        { word: "mixture", meaning: "combination of two or more things" },
+        { word: "circus", meaning: "a show with clowns and animals" },
+        { word: "blanket", meaning: "soft cover used for warmth" },
+        { word: "rescue", meaning: "to save someone from danger" },
+        { word: "message", meaning: "a written or spoken note" },
+        { word: "lantern", meaning: "a light inside a container" },
+        { word: "luggage", meaning: "bags and suitcases for travel" },
+        { word: "musical", meaning: "a play with singing and music" },
+        { word: "picnic", meaning: "meal eaten outdoors" },
+        { word: "fortune", meaning: "a large amount of money or luck" },
+        { word: "compass", meaning: "tool that shows direction" },
+        { word: "artist", meaning: "someone who creates art" },
+        { word: "athlete", meaning: "someone good at sports" },
+        { word: "balance", meaning: "staying steady and not falling" },
+        { word: "crystal", meaning: "clear, hard material with sharp lines" },
+        { word: "destroy", meaning: "to ruin or break completely" },
+        { word: "express", meaning: "to show feelings or thoughts" },
+        { word: "gravity", meaning: "the force that pulls things to the Earth" },
+        { word: "measure", meaning: "to find the size or amount" },
+        { word: "natural", meaning: "found in nature, not made by people" },
+        { word: "pattern", meaning: "a repeated design or shape" },
+        { word: "silence", meaning: "complete quietness" },
+        { word: "journey", meaning: "traveling from one place to another" },
+        { word: "ancient", meaning: "very old or from long ago" },
+        { word: "shelter", meaning: "a safe place from weather or danger" },
+        { word: "surgeon", meaning: "a doctor who performs operations" },
+        { word: "insect", meaning: "small creature with six legs" },
+        { word: "recycle", meaning: "to reuse materials instead of throwing" },
+        { word: "magnet", meaning: "object that attracts metal" },
+        { word: "planet", meaning: "a large body in space" },
+        { word: "tunnel", meaning: "an underground passage" },
+        { word: "vehicle", meaning: "something used for transport" },
+        { word: "capture", meaning: "to take or catch" },
+        { word: "fossil", meaning: "remains of ancient life in rock" },
+        { word: "success", meaning: "doing well or reaching a goal" },
+        { word: "perfume", meaning: "a nice-smelling liquid" },
+        { word: "battery", meaning: "device that stores energy" },
+        { word: "thunder", meaning: "loud sound from the sky" },
+        { word: "journey", meaning: "trip from one place to another" },
+        { word: "warning", meaning: "a signal of danger" },
+        { word: "crowded", meaning: "full of people" },
+        { word: "opinion", meaning: "what someone thinks or believes" },
+        { word: "ancient", meaning: "very old or from history" },
+        { word: "picture", meaning: "an image or photo" },
+        { word: "fiction", meaning: "made-up story" },
+        { word: "drought", meaning: "long period without rain" },
+        { word: "balance", meaning: "equal weight on both sides" },
+        { word: "rainbow", meaning: "colored arc seen after rain" },
+        { word: "healthy", meaning: "in good health" },
+        { word: "painful", meaning: "causing pain" },
+        { word: "produce", meaning: "to make or create something" },
+        { word: "vanish", meaning: "to disappear quickly" },
+        { word: "courage", meaning: "the ability to face fear" },
+        { word: "shelter", meaning: "a safe or covered place" },
+        { word: "trouble", meaning: "problems or difficulties" },
+        { word: "whisper", meaning: "to speak very quietly" },
+        { word: "blanket", meaning: "cover to keep warm" },
+        { word: "cactus", meaning: "a plant that grows in the desert" },
+        { word: "sticker", meaning: "a label with glue" },
+        { word: "monster", meaning: "a scary or ugly creature" },
+        { word: "loyalty", meaning: "being faithful to someone or something" },
+        { word: "welcome", meaning: "greeting someone kindly" },
+        { word: "accident", meaning: "something bad that happens by chance" },
+        { word: "weather", meaning: "condition of the air (rain, sun, etc.)" },
+        { word: "delight", meaning: "great joy or happiness" },
+        { word: "disease", meaning: "illness or sickness" },
+        { word: "subject", meaning: "a school topic or area of study" },
+        { word: "collect", meaning: "to gather things" },
+        { word: "warning", meaning: "something that tells of danger" },
+        { word: "mistake", meaning: "something done wrong" },
+        { word: "example", meaning: "something used to show an idea" },
+        { word: "blanket", meaning: "soft cover" },
+        { word: "confuse", meaning: "to mix up or not understand" },
+        { word: "combine", meaning: "to put together" },
+        { word: "rebuild", meaning: "to build again" },
+        { word: "airport", meaning: "place where planes arrive/depart" },
+        { word: "library", meaning: "place with many books" },
+        { word: "crystal", meaning: "clear rock-like material" },
+        { word: "replace", meaning: "to take the place of something" },
+        { word: "article", meaning: "a piece of writing or report" },
+        { word: "musical", meaning: "play or show with songs" },
+        { word: "explain", meaning: "to make something clear" },
+        { word: "improve", meaning: "to make better" },
+        { word: "bicycle", meaning: "vehicle with two wheels" },
+        { word: "factory", meaning: "place where things are made" },
+        { word: "package", meaning: "a box or wrapped item" },
+        { word: "suggest", meaning: "to give an idea or advice" },
+        { word: "awesome", meaning: "really great or amazing" },
+        { word: "forward", meaning: "in the front direction" },
+        { word: "rotate", meaning: "to turn around something" },
+        { word: "surface", meaning: "the top part of something" },
+        { word: "climate", meaning: "usual weather in a place" },
+        { word: "arrange", meaning: "to put in order" },
+        { word: "connect", meaning: "to join things together" },
+        { word: "thunder", meaning: "loud noise from storm" },
+        { word: "nervous", meaning: "feeling worried or afraid" },
+        { word: "fiction", meaning: "story that is not true" },
+        { word: "battery", meaning: "powers a device" },
+        { word: "blanket", meaning: "soft cloth for covering" },
+        { word: "insect", meaning: "tiny creature like ant or bee" },
+        { word: "measure", meaning: "to find the size or length" },
+        { word: "mission", meaning: "an important job or journey" },
+        { word: "perform", meaning: "to act or do in front of others" },
+        { word: "pointer", meaning: "a tool or finger that shows something" },
+        { word: "remove", meaning: "to take away" },
+        { word: "quickly", meaning: "done fast" },
+        { word: "passage", meaning: "narrow way or text excerpt" },
+        { word: "service", meaning: "helping or doing work for others" },
+        { word: "texture", meaning: "how something feels" },
+        { word: "message", meaning: "note or communication" },
+        { word: "trouble", meaning: "problem or difficulty" },
+        { word: "pathway", meaning: "small road or track" },
+        { word: "problem", meaning: "something that needs solving" },
+        { word: "respond", meaning: "to reply or answer" },
+        { word: "curtain", meaning: "cloth that covers windows" },
+        { word: "blanket", meaning: "warm cover" },
+        { word: "forward", meaning: "moving ahead" },
+        { word: "village", meaning: "small group of houses" },
+        { word: "capture", meaning: "to catch or seize" },
+        { word: "promote", meaning: "to support or help grow" },
+        { word: "rescue", meaning: "to save from harm" },
+        { word: "silence", meaning: "complete quiet" },
+        { word: "support", meaning: "to help or hold up" },
+        { word: "tunnel", meaning: "long underground path" },
+        { word: "crystal", meaning: "clear, often shiny rock" },
+        { word: "musical", meaning: "a story with songs and music" },
+        { word: "victory", meaning: "success in a game or war" },
+        { word: "subject", meaning: "topic of study or talk" },
+        { word: "rainbow", meaning: "colored arc in the sky" },
+        { word: "pyramid", meaning: "a tall, pointed stone structure" },
+        { word: "vehicle", meaning: "thing that moves people (car, bus, etc.)" },
+        { word: "garbage", meaning: "trash or waste" },
+        { word: "nervous", meaning: "worried or anxious" },
+        { word: "journey", meaning: "long trip" },
+        { word: "plastic", meaning: "material used for many things" },
+        { word: "journey", meaning: "act of traveling" },
+        { word: "capture", meaning: "to take prisoner or control" },
+        { word: "program", meaning: "plan or computer instructions" },
+        { word: "digital", meaning: "involving computers or screens" },
+        { word: "harvest", meaning: "collecting crops" },
+        { word: "contest", meaning: "competition or game" },
+        { word: "warning", meaning: "notice of danger" },
+        { word: "dentist", meaning: "tooth doctor" },
+        { word: "journal", meaning: "daily writing or record" },
+        { word: "concept", meaning: "idea or thought" },
+        { word: "capital", meaning: "main city of a country" },
+        { word: "silence", meaning: "complete quiet" },
+        { word: "species", meaning: "type of animal or plant" },
+        { word: "history", meaning: "study of past events" },
+        { word: "project", meaning: "a planned task or assignment" },
+        { word: "journey", meaning: "a trip or voyage" },
+        { word: "mystery", meaning: "something not known or solved" },
+        { word: "pattern", meaning: "repeated design" },
+        { word: "machine", meaning: "device with moving parts" },
+        { word: "justice", meaning: "fairness or law" },
+        { word: "explore", meaning: "to look around and learn" },
+        { word: "ancient", meaning: "very old" },
+        { word: "surface", meaning: "outermost layer" }
+      ],
+      difficult: [
+        { word: "psychology", meaning: "study of the human mind" },
+        { word: "entrepreneur", meaning: "a person who starts a business" },
+        { word: "rhythm", meaning: "a regular beat or pattern" },
+        { word: "philosophy", meaning: "study of ideas about life" },
+        { word: "architecture", meaning: "design of buildings" },
+        { word: "diplomacy", meaning: "managing relationships between countries" },
+        { word: "hypothesis", meaning: "an idea that is tested" },
+        { word: "exaggeration", meaning: "making something seem bigger than it is" },
+        { word: "astrophysics", meaning: "science of stars and space" },
+        { word: "equilibrium", meaning: "balance or stability" },
+        { word: "contradiction", meaning: "a situation of being opposed to something" },
+        { word: "catastrophe", meaning: "a disaster or great misfortune" },
+        { word: "consciousness", meaning: "the state of being aware of one's existence" },
+        { word: "inconvenience", meaning: "a minor trouble or problem" },
+        { word: "parliament", meaning: "group of people who make a country's laws" },
+        { word: "necessary", meaning: "needed or required" },
+        { word: "queue", meaning: "a line of people or vehicles" },
+        { word: "congratulations", meaning: "expressing good wishes for an achievement" },
+        { word: "acquiesce", meaning: "to accept something without protest" },
+        { word: "disseminate", meaning: "to spread widely" },
+        { word: "ubiquitous", meaning: "present everywhere at the same time" },
+        { word: "idiosyncrasy", meaning: "a peculiar habit of an individual" },
+        { word: "metamorphosis", meaning: "change in form or nature" },
+        { word: "onomatopoeia", meaning: "a word that sounds like what it describes" },
+        { word: "paraphernalia", meaning: "miscellaneous articles or equipment" },
+        { word: "superfluous", meaning: "unnecessary or more than enough" },
+        { word: "unnecessary", meaning: "not needed" },
+        { word: "conscience", meaning: "inner sense of right and wrong" },
+        { word: "disbursement", meaning: "the act of paying out money" },
+        { word: "efflorescence", meaning: "the process of flowering" },
+        { word: "extraneous", meaning: "irrelevant or unrelated" },
+        { word: "iridescent", meaning: "showing glowing colors like a rainbow" },
+        { word: "liaison", meaning: "communication between groups" },
+        { word: "multimillionaire", meaning: "person with millions of dollars" },
+        { word: "obsolescence", meaning: "the state of becoming obsolete" },
+        { word: "psychiatrist", meaning: "a doctor for mental illnesses" },
+        { word: "reminiscence", meaning: "a story told about a past event" },
+        { word: "subsequently", meaning: "afterward or later" },
+        { word: "tranquility", meaning: "the state of being calm and peaceful" },
+        { word: "vindicate", meaning: "to clear from blame or suspicion" },
+        { word: "vicissitude", meaning: "a change of circumstances or fortune" },
+        { word: "discombobulate", meaning: "to confuse or disconcert" },
+        { word: "kaleidoscope", meaning: "a toy with changing patterns of light" },
+        { word: "mischievous", meaning: "causing trouble in a playful way" },
+        { word: "phenomenon", meaning: "a fact or situation that is observed to exist" },
+        { word: "rhythm", meaning: "a strong, regular, repeated pattern of movement or sound" },
+        { word: "sacrilegious", meaning: "involving disrespect toward something sacred" },
+        { word: "simultaneously", meaning: "at the same time" },
+        { word: "unanimous", meaning: "fully in agreement" },
+        { word: "xenophobia", meaning: "fear of people from other countries" },
+        { word: "yachtsman", meaning: "a person who sails a yacht" },
+        { word: "zucchini", meaning: "a type of summer squash" },
+        { word: "camaraderie", meaning: "mutual trust and friendship" },
+        { word: "definitely", meaning: "without any doubt" },
+        { word: "embarrass", meaning: "to feel awkward or ashamed" },
+        { word: "guarantee", meaning: "a formal promise or assurance" },
+        { word: "jeopardize", meaning: "to put in a situation where there is a risk" },
+        { word: "lieutenant", meaning: "a deputy or a military rank" },
+        { word: "maneuver", meaning: "a movement or series of moves" },
+        { word: "occurrence", meaning: "an event or happening" },
+        { word: "parochial", meaning: "relating to a church parish, or narrow-minded" },
+        { word: "questionnaire", meaning: "a set of questions for a survey" },
+        { word: "ridiculous", meaning: "deserving or inviting derision or mockery" },
+        { word: "schedule", meaning: "a plan for a list of events" },
+        { word: "tremendous", meaning: "very large or great" },
+        { word: "unconscious", meaning: "not awake or aware" },
+        { word: "vacuum", meaning: "a space entirely empty of matter" },
+        { word: "withdrawal", meaning: "the act of taking something back or out" },
+        { word: "accommodate", meaning: "to provide lodging or space for" },
+        { word: "analyze", meaning: "to examine in detail for purposes of explanation" },
+        { word: "bureaucracy", meaning: "a system of government or management" },
+        { word: "conscience", meaning: "an inner feeling or voice acting as a guide" },
+        { word: "corollary", meaning: "a direct or natural consequence" },
+        { word: "definitely", meaning: "without doubt" },
+        { word: "disappear", meaning: "to stop being visible" },
+        { word: "exhilarate", meaning: "to make someone feel very happy or elated" },
+        { word: "fascinate", meaning: "to attract the strong interest of" },
+        { word: "gorgeous", meaning: "very beautiful or attractive" },
+        { word: "harassment", meaning: "aggressive pressure or intimidation" },
+        { word: "infiltrate", meaning: "to enter or gain access to secretly" },
+        { word: "judgment", meaning: "the ability to make considered decisions" },
+        { word: "knowledge", meaning: "facts, information, and skills acquired" },
+        { word: "library", meaning: "a building containing collections of books" },
+        { word: "millennium", meaning: "a period of one thousand years" },
+        { word: "occurrence", meaning: "an instance of something happening" },
+        { word: "parallel", meaning: "side by side and having the same distance continuously" },
+        { word: "perseverance", meaning: "persistence in doing something despite difficulty" },
+        { word: "pneumonia", meaning: "lung inflammation caused by bacterial or viral infection" },
+        { word: "psychiatrist", meaning: "a medical practitioner specializing in mental illness" },
+        { word: "rhetoric", meaning: "the art of effective speaking or writing" },
+        { word: "silhouette", meaning: "the dark shape and outline of someone against a lighter background" },
+        { word: "technology", meaning: "the application of scientific knowledge for practical purposes" },
+        { word: "thoroughly", meaning: "in a detailed and careful way" },
+        { word: "unquestionably", meaning: "without any doubt" },
+        { word: "vicinity", meaning: "the area near or surrounding a particular place" },
+        { word: "whistle", meaning: "a clear, high-pitched sound" }
+      ],
+      legend: [
+        { word: "antidisestablishmentarianism", meaning: "opposition to the disestablishment of the Church of England" },
+        { word: "floccinaucinihilipilification", meaning: "the action or habit of estimating something as worthless" },
+        { word: "pneumonoultramicroscopicsilicovolcanoconiosis", meaning: "a lung disease caused by inhaling very fine ash and dust" },
+        { word: "honorificabilitudinitatibus", meaning: "the state of being able to achieve honors" },
+        { word: "pseudopseudohypoparathyroidism", meaning: "a genetic disorder that mimics pseudohypoparathyroidism" },
+        { word: "supercalifragilisticexpialidocious", meaning: "a nonsensical word used to express something as extraordinarily good" },
+        { word: "hippopotomonstrosesquippedaliophobia", meaning: "the fear of long words" },
+        { word: "subdermatoglyphic", meaning: "the patterns under the skin's surface" },
+        { word: "psychoneuroendocrinological", meaning: "the study of interaction between psychological processes, the nervous system, and the endocrine system" },
+        { word: "incomprehensibilities", meaning: "things that are impossible to understand" },
+        { word: "unconstitutional", meaning: "not in accordance with a political constitution" },
+        { word: "microminiaturization", meaning: "the process of making things very small" },
+        { word: "disproportionate", meaning: "too large or too small in comparison to something else" },
+        { word: "counterrevolutionaries", meaning: "people who take part in a counterrevolution" },
+        { word: "interdenominational", meaning: "between different religious denominations" },
+        { word: "electrophysiological", meaning: "relating to the electrical properties of living cells and tissues" },
+        { word: "radioimmunoelectrophoresis", meaning: "a medical technique combining radioimmunoassay and electrophoresis" },
+        { word: "otorhinolaryngological", meaning: "relating to the ear, nose, and throat" },
+        { word: "dermatoglyphics", meaning: "the study of skin patterns, especially on fingers" },
+        { word: "photomicrographically", meaning: "by means of a photograph taken through a microscope" },
+        { word: "immunohematology", meaning: "the study of blood-related immune system disorders" }
+      ],
+      tharoorist: [
+        { word: "sesquipedalian", meaning: "characterized by long words; long-winded" },
+        { word: "palimpsest", meaning: "a manuscript on which later writing is superimposed on effaced earlier writing" },
+        { word: "perspicacious", meaning: "having a ready insight into and understanding of things" },
+        { word: "jejune", meaning: "naive, simplistic, and superficial" },
+        { word: "perambulate", meaning: "to walk in a leisurely way" },
+        { word: "excoriate", meaning: "to severely scold or criticize" },
+        { word: "crepuscular", meaning: "relating to or resembling twilight" },
+        { word: "anodyne", meaning: "not likely to cause offence or disagreement; a painkiller" },
+        { word: "eschew", meaning: "to deliberately avoid using; abstain from" },
+        { word: "obstreperous", meaning: "noisy and difficult to control" },
+        { word: "verisimilitude", meaning: "the appearance of being true or real" },
+        { word: "lugubrious", meaning: "looking or sounding sad and dismal" },
+        { word: "panegyric", meaning: "a public speech or text in praise of someone or something" },
+        { word: "phlegmatic", meaning: "having an unemotional and calm disposition" },
+        { word: "quixotic", meaning: "exceedingly idealistic; unrealistic and impractical" },
+        { word: "raconteur", meaning: "a person who tells anecdotes in a skillful and amusing way" },
+        { word: "sycophant", meaning: "a person who acts obsequiously toward someone important in order to gain advantage" },
+        { word: "trenchant", meaning: "vigorous or incisive in expression or style" },
+        { word: "vituperate", meaning: "to blame or insult someone in strong language" },
+        { word: "apotheosis", meaning: "the highest point in the development of something; a culmination or climax" },
+        { word: "bildungsroman", meaning: "a novel dealing with one person's formative years or spiritual education" },
+        { word: "convivial", meaning: "friendly, lively, and enjoyable" },
+        { word: "disingenuous", meaning: "not candid or sincere" },
+        { word: "egregious", meaning: "outstandingly bad; shocking" },
+        { word: "fatuous", meaning: "silly and pointless" },
+        { word: "garrulous", meaning: "excessively talkative" },
+        { word: "histrionic", meaning: "overly theatrical or melodramatic" },
+        { word: "impecunious", meaning: "having little or no money" },
+        { word: "juxtaposition", meaning: "the fact of two things being seen or placed close together with contrasting effect" },
+        { word: "kismet", meaning: "destiny; fate" },
+        { word: "lackadaisical", meaning: "lacking enthusiasm and determination; carelessly lazy" },
+        { word: "machiavellian", meaning: "cunning, scheming, and unscrupulous" },
+        { word: "noctivagant", meaning: "wandering at night" },
+        { word: "obsequious", meaning: "obedient or attentive to an excessive degree" },
+        { word: "pellucid", meaning: "translucently clear" },
+        { word: "pulchritudinous", meaning: "beautiful" },
+        { word: "quintessential", meaning: "representing the most perfect example of a quality" },
+        { word: "recalcitrant", meaning: "having an obstinately uncooperative attitude" },
+        { word: "serendipity", meaning: "the occurrence and development of events by chance in a happy or beneficial way" },
+        { word: "temerity", meaning: "excessive confidence or boldness; audacity" },
+        { word: "ubiquitous", meaning: "present, appearing, or found everywhere" },
+        { word: "vacillate", meaning: "to waver between different opinions or actions" },
+        { word: "waggish", meaning: "humorous in a playful, mischievous, or facetious manner" },
+        { word: "xenodochial", meaning: "hospitable to strangers" },
+        { word: "yegg", meaning: "a burglar, especially one who cracks safes" },
+        { word: "zeitgeist", meaning: "the defining spirit or mood of a particular period of history" }
+      ]
+    };
+
+    const levelSelect = document.getElementById('level');
+    const newWordButton = document.getElementById('newWordButton');
+    const hearButton = document.getElementById('hearButton');
+    const answerButton = document.getElementById('answerButton');
+    const userInput = document.getElementById('userInput');
+    const definitionDiv = document.getElementById('definition');
+    const feedbackDiv = document.getElementById('feedback');
+    const volumeSlider = document.getElementById('volume');
+    const scoreDisplay = document.getElementById('score');
+    const timerToggle = document.getElementById('timerToggle');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const modeToggle = document.getElementById('modeToggle');
+    const body = document.body;
+
+    let currentWord = null;
+    let score = 0;
+    let totalAttempts = 0;
+    let timerInterval;
+    let timeRemaining = 60;
+    let availableWords = [];
+
+    // Initialize word list and UI
+    updateWordList();
+
+    levelSelect.addEventListener('change', updateWordList);
+    timerToggle.addEventListener('change', handleTimerToggle);
+    modeToggle.addEventListener('click', toggleDarkMode);
+
+    // Start with a new word on load
+    newWord();
+
+    function updateWordList() {
+      const selectedLevel = levelSelect.value;
+      availableWords = [...wordList[selectedLevel]];
+    }
+
+    function newWord() {
+      resetUI();
+      stopTimer();
+      if (availableWords.length === 0) {
+        updateWordList();
+        if (availableWords.length === 0) {
+          definitionDiv.textContent = "No words available for this level. Please select another.";
+          disableButtons(true);
+          return;
+        }
+      }
+
+      const randomIndex = Math.floor(Math.random() * availableWords.length);
+      currentWord = availableWords[randomIndex];
+      availableWords.splice(randomIndex, 1); // Remove word to avoid repetition
+      
+      definitionDiv.textContent = `Meaning: "${currentWord.meaning}"`;
+      feedbackDiv.textContent = '';
+      userInput.disabled = false;
+      hearButton.disabled = false;
+      answerButton.disabled = false;
+      userInput.focus();
+      
+      if (timerToggle.checked) {
+        startTimer();
+      }
+    }
+
+    function speakWord() {
+      if (!currentWord) {
+        feedbackDiv.textContent = "Please generate a new word first.";
+        return;
+      }
+      const synth = window.speechSynthesis;
+      if (!synth) {
+        alert("Your browser does not support Speech Synthesis. Try a different browser.");
+        return;
+      }
+      const utterance = new SpeechSynthesisUtterance(currentWord.word);
+      utterance.volume = volumeSlider.value;
+      synth.speak(utterance);
+    }
+
+    function checkAnswer() {
+      if (!currentWord) {
+        feedbackDiv.textContent = "Please generate a new word first.";
+        return;
+      }
+      stopTimer();
+      totalAttempts++;
+      const userGuess = userInput.value.trim().toLowerCase();
+      if (userGuess === currentWord.word.toLowerCase()) {
+        feedbackDiv.textContent = "✅ Correct!";
+        feedbackDiv.style.color = body.classList.contains('dark-mode') ? '#66ff66' : '#28a745';
+        score++;
+        celebrate();
+        disableButtons(true);
+        setTimeout(newWord, 2000);
+      } else {
+        feedbackDiv.textContent = `❌ Incorrect. The correct spelling is "${currentWord.word}".`;
+        feedbackDiv.style.color = body.classList.contains('dark-mode') ? '#ff6666' : '#dc3545';
+      }
+      updateScore();
+    }
+
+    function updateScore() {
+      scoreDisplay.textContent = `Score: ${score}/${totalAttempts}`;
+    }
+
+    function resetUI() {
+      userInput.value = '';
+      feedbackDiv.textContent = '';
+      definitionDiv.textContent = "Click '➕ New Word' for a word, then '🔊 Hear' to listen.";
+      feedbackDiv.style.color = '';
+      timerDisplay.textContent = '';
+      disableButtons(false);
+    }
+
+    function disableButtons(state) {
+      hearButton.disabled = state;
+      answerButton.disabled = state;
+      userInput.disabled = state;
+    }
+
+    function handleTimerToggle() {
+      if (timerToggle.checked && currentWord) {
+        startTimer();
+      } else {
+        stopTimer();
+        timerDisplay.textContent = '';
+      }
+    }
+
+    function startTimer() {
+      stopTimer(); // Clear any existing timer
+      timeRemaining = 60;
+      timerDisplay.textContent = timeRemaining + 's';
+      timerInterval = setInterval(() => {
+        timeRemaining--;
+        timerDisplay.textContent = timeRemaining + 's';
+        if (timeRemaining <= 0) {
+          stopTimer();
+          totalAttempts++;
+          updateScore();
+          feedbackDiv.textContent = `⏰ Time's up! The correct spelling is "${currentWord.word}".`;
+          feedbackDiv.style.color = body.classList.contains('dark-mode') ? '#ff6666' : '#dc3545';
+          disableButtons(true);
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+    }
+
+    function toggleDarkMode() {
+      body.classList.toggle('dark-mode');
+      const isDarkMode = body.classList.contains('dark-mode');
+      modeToggle.textContent = isDarkMode ? '🌙' : '☀️';
+    }
+    
+    function celebrate() {
+      const emojis = ['✨', '🎉', '🥳', '🌟', '🎊', '💯', '✔️'];
+      for (let i = 0; i < 10; i++) {
+        const emoji = document.createElement('span');
+        emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        emoji.classList.add('falling-emoji');
+        emoji.style.left = `${Math.random() * 100}vw`;
+        emoji.style.animationDelay = `${Math.random() * 0.5}s`;
+        document.body.appendChild(emoji);
+        
+        setTimeout(() => {
+          emoji.remove();
+        }, 3000); // Remove the emoji after the animation ends
+      }
+    }
+  </script>
+</body>
+</html>
